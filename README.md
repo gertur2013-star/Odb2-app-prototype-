@@ -462,3 +462,26 @@ class DtcDatabase(context: Context) {
         return dtcMap[code]?.causes ?: emptyList()
     }
 }
+{
+  "P0100": {
+    "description": "Mass or Volume Air Flow Circuit Malfunction",
+    "severity": "ERROR",
+    "system": "ENGINE",
+    "causes": ["MAF sensor failure", "Wiring issue", "ECU problem"],
+    "solutions": ["Test MAF sensor", "Check wiring harness", "Scan ECU"]
+  },
+  "P0700": {
+    "description": "Transmission Control System Malfunction",
+    "severity": "ERROR",
+    "system": "TRANSMISSION",
+    "causes": ["TCM failure", "Transmission solenoid", "Wiring issue"],
+    "solutions": ["Check TCM codes", "Test solenoids", "Inspect wiring"]
+  },
+  "U0100": {
+    "description": "Lost Communication With ECM/PCM",
+    "severity": "CRITICAL",
+    "system": "CHASSIS",
+    "causes": ["CAN bus failure", "ECU power loss", "Network issue"],
+    "solutions": ["Check CAN bus", "Test ECU power", "Scan network"]
+  }
+}
