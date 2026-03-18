@@ -685,3 +685,36 @@ class DashboardFragment : Fragment() {
         _binding = null
     }
 }
+package com.openautodiag.advanced
+
+// WARNING: Actual programming requires licensed access and safety measures
+// This is only a read-only example
+
+class EcuInfoReader {
+    fun readEcuInfo(protocol: String): Map<String, String> {
+        return mapOf(
+            "ECU Serial" to readSerialNumber(protocol),
+            "Software Version" to readSoftwareVersion(protocol),
+            "Calibration ID" to readCalibrationId(protocol)
+        )
+    }
+    
+    private fun readSerialNumber(protocol: String): String {
+        // Implementation depends on specific manufacturer protocol
+        return when (protocol) {
+            "KWP2000" -> readKwpSerial()
+            "CAN" -> readCanSerial()
+            else -> "Not Supported"
+        }
+    }
+    
+    private fun readSoftwareVersion(protocol: String): String {
+        // Placeholder - real implementation requires protocol-specific commands
+        return "V1.0.0"
+    }
+    
+    private fun readCalibrationId(protocol: String): String {
+        // Placeholder - real implementation requires protocol-specific commands
+        return "CAL123456"
+    }
+}
