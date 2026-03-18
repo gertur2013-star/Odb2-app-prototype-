@@ -383,3 +383,82 @@ class PidDecoder {
         return response
     }
 }
+package com.openautodiag.obd
+
+import android.content.Context
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import org.json.JSONObject
+
+class DtcDatabase(context: Context) {
+    private val dtcMap = mutableMapOf<String, DTCInfo>()
+    
+    init {
+        loadDatabase(context)
+    }
+    
+    data class DTCInfo(
+        val description: String,
+        val severity: ObdManager.DTC.Severity,
+        val system: ObdManager.DTC.SystemType,
+        val causes: List<String> = emptyList(),
+        val solutions: List<String> = emptyList()
+    )
+    
+    private fun loadDatabase(context: Context) {
+        try {
+            val inputStream = context.assets.open("dtc_codes.json")
+            val json = inputStream.bufferedReader().use { it.readText() }
+            val type = object : TypeToken<Map<String, DTCInfo>>() {}.type
+            val loaded = Gson().fromJson<Map<String, DTCInfo>>(json, type)
+            dtcMap.putAll(loaded)
+        } catch (e: Exception) {
+            // Load default hardcoded codes
+            loadDefaultCodes()
+        }
+    }
+    
+    private fun loadDefaultCodes() {
+        // Common OBD2 codes
+        val commonCodes = mapOf(
+            "P0300" to DTCInfo(
+                "Random/Multiple Cylinder Misfire Detected",
+                ObdManager.DTC.Severity.ERROR,
+                ObdManager.DTC.SystemType.ENGINE,
+                listOf("Ignition system", "Fuel system", "Compression"),
+                listOf("Check spark plugs", "Check fuel injectors", "Compression test")
+            ),
+            "P0420" to DTCInfo(
+                "Catalyst System Efficiency Below Threshold",
+                ObdManager.DTC.Severity.WARNING,
+                ObdManager.DTC.SystemType.ENGINE,
+                listOf("Catalytic converter", "O2 sensors", "Exhaust leak"),
+                listOf("Check catalytic converter", "Test O2 sensors")
+            ),
+            "P0171" to DTCInfo(
+                "System Too Lean (Bank 1)",
+                ObdManager.DTC.Severity.WARNING,
+                ObdManager.DTC.SystemType.ENGINE,
+                listOf("Vacuum leak", "Fuel pressure", "MAF sensor"),
+                listOf("Check for vacuum leaks", "Test fuel pressure", "Clean MAF sensor")
+            )
+        )
+        dtcMap.putAll(commonCodes)
+    }
+    
+    fun getDescription(code: String): String {
+        return dtcMap[code]?.description ?: "Unknown DTC"
+    }
+    
+    fun getSeverity(code: String): ObdManager.DTC.Severity {
+        return dtcMap[code]?.severity ?: ObdManager.DTC.Severity.WARNING
+    }
+    
+    fun getSystem(code: String): ObdManager.DTC.SystemType {
+        return dtcMap[code]?.system ?: ObdManager.DTC.SystemType.ENGINE
+    }
+    
+    fun getCauses(code: String): List<String> {
+        return dtcMap[code]?.causes ?: emptyList()
+    }
+}
