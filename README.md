@@ -313,3 +313,73 @@ class ObdManager(context: Context) {
         }
     }
 }
+package com.openautodiag.obd
+
+class PidDecoder {
+    fun decode(pid: String, response: String): Any {
+        return when (pid) {
+            ObdManager.CMD_ENGINE_RPM -> decodeRPM(response)
+            ObdManager.CMD_VEHICLE_SPEED -> decodeSpeed(response)
+            ObdManager.CMD_THROTTLE_POS -> decodeThrottle(response)
+            ObdManager.CMD_ENGINE_LOAD -> decodeEngineLoad(response)
+            ObdManager.CMD_COOLANT_TEMP -> decodeTemperature(response)
+            else -> decodeGeneric(response)
+        }
+    }
+    
+    private fun decodeRPM(response: String): Int {
+        val bytes = extractDataBytes(response)
+        if (bytes.size >= 2) {
+            return ((bytes[0] * 256 + bytes[1]) / 4).toInt()
+        }
+        return 0
+    }
+    
+    private fun decodeSpeed(response: String): Int {
+        val bytes = extractDataBytes(response)
+        if (bytes.isNotEmpty()) {
+            return bytes[0].toInt()
+        }
+        return 0
+    }
+    
+    private fun decodeThrottle(response: String): Float {
+        val bytes = extractDataBytes(response)
+        if (bytes.isNotEmpty()) {
+            return (bytes[0] * 100 / 255).toFloat()
+        }
+        return 0f
+    }
+    
+    private fun decodeEngineLoad(response: String): Float {
+        val bytes = extractDataBytes(response)
+        if (bytes.isNotEmpty()) {
+            return (bytes[0] * 100 / 255).toFloat()
+        }
+        return 0f
+    }
+    
+    private fun decodeTemperature(response: String): Int {
+        val bytes = extractDataBytes(response)
+        if (bytes.isNotEmpty()) {
+            return bytes[0].toInt() - 40
+        }
+        return 0
+    }
+    
+    private fun extractDataBytes(response: String): ByteArray {
+        // Remove "41 XX" header and any spaces
+        val clean = response.replace("41 ", "").replace(" ", "")
+        return if (clean.length % 2 == 0) {
+            ByteArray(clean.length / 2) {
+                clean.substring(it * 2, it * 2 + 2).toInt(16).toByte()
+            }
+        } else {
+            byteArrayOf()
+        }
+    }
+    
+    private fun decodeGeneric(response: String): String {
+        return response
+    }
+}
