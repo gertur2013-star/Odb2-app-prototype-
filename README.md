@@ -601,3 +601,87 @@ class MainActivity : AppCompatActivity() {
         obdManager.disconnect()
     }
 }
+package com.openautodiag.ui
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.openautodiag.databinding.FragmentDashboardBinding
+import com.openautodiag.obd.ObdManager
+import kotlinx.coroutines.launch
+
+class DashboardFragment : Fragment() {
+    private var _binding: FragmentDashboardBinding? = null
+    private val binding get() = _binding!!
+    
+    private lateinit var obdManager: ObdManager
+    
+    companion object {
+        fun newInstance(manager: ObdManager): DashboardFragment {
+            return DashboardFragment().apply {
+                obdManager = manager
+            }
+        }
+    }
+    
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        _binding = FragmentDashboardBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+    
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        
+        setupUI()
+        observeLiveData()
+    }
+    
+    private fun setupUI() {
+        binding.btnScanDevices.setOnClickListener {
+            // Open device scan dialog
+        }
+        
+        binding.btnReadCodes.setOnClickListener {
+            lifecycleScope.launch {
+                obdManager.readDTCs()
+            }
+        }
+        
+        binding.btnClearCodes.setOnClickListener {
+            obdManager.clearDTCs()
+        }
+    }
+    
+    private fun observeLiveData() {
+        obdManager.liveData.observe(viewLifecycleOwner) { data ->
+            data.forEach { (key, value) ->
+                when (key) {
+                    "Engine RPM" -> binding.tvRpm.text = "$value RPM"
+                    "Vehicle Speed" -> binding.tvSpeed.text = "$value km/h"
+                    "Throttle Position" -> binding.tvThrottle.text = "$value%"
+                    "Engine Load" -> binding.tvLoad.text = "$value%"
+                    "Coolant Temp" -> binding.tvTemp.text = "${value}°C"
+                }
+            }
+        }
+        
+        obdManager.dtcCodes.observe(viewLifecycleOwner) { codes ->
+            binding.tvCodeCount.text = "Codes: ${codes.size}"
+            if (codes.isNotEmpty()) {
+                binding.tvLastCode.text = codes.first().code
+            }
+        }
+    }
+    
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+}
