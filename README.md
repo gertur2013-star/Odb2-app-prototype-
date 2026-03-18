@@ -718,3 +718,37 @@ class EcuInfoReader {
         return "CAL123456"
     }
 }
+package com.openautodiag.utils
+
+object SafetyCheck {
+    private val dangerousOperations = setOf(
+        "FLASH",
+        "WRITE",
+        "PROGRAM",
+        "FORMAT",
+        "ERASE"
+    )
+    
+    fun validateCommand(command: String): SafetyResult {
+        return if (isDangerous(command)) {
+            SafetyResult(
+                allowed = false,
+                warning = "This command can permanently modify ECU. Use with extreme caution.",
+                requiresExpertMode = true
+            )
+        } else {
+            SafetyResult(allowed = true)
+        }
+    }
+    
+    private fun isDangerous(command: String): Boolean {
+        val upper = command.uppercase()
+        return dangerousOperations.any { upper.contains(it) }
+    }
+    
+    data class SafetyResult(
+        val allowed: Boolean,
+        val warning: String = "",
+        val requiresExpertMode: Boolean = false
+    )
+}
