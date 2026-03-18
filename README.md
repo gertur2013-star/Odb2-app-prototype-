@@ -499,3 +499,105 @@ class DtcDatabase(context: Context) {
     {"pid": "0110", "name": "MAF Air Flow Rate", "unit": "g/s"}
   ]
 }
+package com.openautodiag
+
+import android.Manifest
+import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
+import android.content.pm.PackageManager
+import android.os.Build
+import android.os.Bundle
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import com.openautodiag.databinding.ActivityMainBinding
+import com.openautodiag.obd.ObdManager
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityMainBinding
+    private lateinit var obdManager: ObdManager
+    
+    companion object {
+        private const val REQUEST_BLUETOOTH_PERMISSIONS = 100
+        private val REQUIRED_PERMISSIONS = arrayOf(
+            Manifest.permission.BLUETOOTH_SCAN,
+            Manifest.permission.BLUETOOTH_CONNECT,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+    }
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        
+        obdManager = ObdManager(this)
+        
+        checkPermissions()
+        setupNavigation()
+        setupObservers()
+    }
+    
+    private fun checkPermissions() {
+        val missingPermissions = REQUIRED_PERMISSIONS.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        
+        if (missingPermissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(
+                this,
+                missingPermissions.toTypedArray(),
+                REQUEST_BLUETOOTH_PERMISSIONS
+            )
+        }
+    }
+    
+    private fun setupNavigation() {
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_dashboard -> {
+                    replaceFragment(DashboardFragment.newInstance(obdManager))
+                    true
+                }
+                R.id.nav_codes -> {
+                    replaceFragment(CodeReaderFragment.newInstance(obdManager))
+                    true
+                }
+                R.id.nav_live -> {
+                    replaceFragment(LiveDataFragment.newInstance(obdManager))
+                    true
+                }
+                else -> false
+            }
+        }
+        
+        replaceFragment(DashboardFragment.newInstance(obdManager))
+    }
+    
+    private fun replaceFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_container, fragment)
+            .commit()
+    }
+    
+    private fun setupObservers() {
+        obdManager.connectionState.observe(this) { state ->
+            when (state) {
+                ObdManager.ConnectionState.CONNECTED -> {
+                    Toast.makeText(this, "Connected to OBD2", Toast.LENGTH_SHORT).show()
+                }
+                ObdManager.ConnectionState.ERROR -> {
+                    Toast.makeText(this, "Connection error", Toast.LENGTH_SHORT).show()
+                }
+                else -> {}
+            }
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        obdManager.disconnect()
+    }
+}
