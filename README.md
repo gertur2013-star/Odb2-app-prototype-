@@ -485,3 +485,17 @@ class DtcDatabase(context: Context) {
     "solutions": ["Check CAN bus", "Test ECU power", "Scan network"]
   }
 }
+{
+  "supportedPids": [
+    {"pid": "0100", "name": "Supported PIDs 01-20", "unit": "bits"},
+    {"pid": "0101", "name": "Monitor Status", "unit": "bits"},
+    {"pid": "010C", "name": "Engine RPM", "unit": "RPM"},
+    {"pid": "010D", "name": "Vehicle Speed", "unit": "km/h"},
+    {"pid": "0111", "name": "Throttle Position", "unit": "%"},
+    {"pid": "0105", "name": "Coolant Temperature", "unit": "°C"},
+    {"pid": "0104", "name": "Engine Load", "unit": "%"},
+    {"pid": "010B", "name": "Intake Manifold Pressure", "unit": "kPa"},
+    {"pid": "010F", "name": "Intake Air Temperature", "unit": "°C"},
+    {"pid": "0110", "name": "MAF Air Flow Rate", "unit": "g/s"}
+  ]
+}
